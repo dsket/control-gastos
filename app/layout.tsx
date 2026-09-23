@@ -3,17 +3,24 @@ import { AuthProvider } from "../context/AuthContext";
 
 import type { Metadata } from "next";
 
+
+
 export const metadata: Metadata = {
   title: "Mis Gastos",
   description: "Llevá el control de tus tarjetas y cuotas",
   manifest: "/manifest.json",
   themeColor: "#22c55e",
+  icons: {
+    icon: "/icono.png",
+    apple: "/icono.png", // ¡Esta es la línea mágica para los celulares!
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Mis Gastos",
   },
 };
+
 
 
 export default function RootLayout({
