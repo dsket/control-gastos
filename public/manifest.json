@@ -1,0 +1,16 @@
+{
+  "name": "Mis Gastos",
+  "short_name": "Gastos",
+  "description": "Control de finanzas personales",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f0fdf4",
+  "theme_color": "#22c55e",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3843/3843058.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
