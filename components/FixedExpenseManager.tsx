@@ -50,7 +50,7 @@ export default function FixedExpenseManager() {
   return (
     <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-8">
       <div>
-        <h2 className="text-2xl font-extrabold text-blue-800 mb-2">Nuevo Fijo</h2>
+        <h2 className="text-2xl font-extrabold text-blue-800 mb-2">Nuevo GastoFijo</h2>
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-[2rem] shadow-sm border border-blue-100 mt-2 flex flex-col gap-3">
           <input type="text" placeholder="Ej: Gimnasio" value={description} onChange={e => setDescription(e.target.value)} required className="p-3 rounded-xl border bg-blue-50/50" />
           <input type="number" placeholder="Monto" value={amount} onChange={e => setAmount(e.target.value)} required className="p-3 rounded-xl border bg-blue-50/50" />
@@ -107,7 +107,7 @@ export default function FixedExpenseManager() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setExpenseToDelete(null)}>
           <div className="bg-white rounded-[2rem] w-full max-w-sm shadow-2xl p-6 flex flex-col gap-4 text-center animate-in zoom-in" onClick={e => e.stopPropagation()}>
             <div className="text-5xl mb-2">🗑️</div>
-            <h3 className="text-xl font-extrabold text-slate-800">¿Borrar fijo?</h3>
+            <h3 className="text-xl font-extrabold text-slate-800">¿Borrar gasto fijo?</h3>
             <div className="flex gap-3 mt-4">
               <button onClick={() => setExpenseToDelete(null)} className="w-1/2 bg-slate-100 text-slate-700 font-bold py-3 rounded-xl">Cancelar</button>
               <button onClick={executeDelete} className="w-1/2 bg-red-500 text-white font-bold py-3 rounded-xl">Sí, borrar</button>

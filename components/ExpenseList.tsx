@@ -30,11 +30,24 @@ export default function ExpenseList({ refreshTrigger }: { refreshTrigger?: numbe
     setEditId(exp.id); setEditDesc(exp.description); setEditAmt(exp.amount.toString()); setEditCat(exp.category); setEditDate(exp.date);
   };
 
-  const saveEdit = async (id: string) => {
+    const saveEdit = async (id: string) => {
     if (!user) return;
-    await updateExpense(user.uid, id, { description: editDesc, amount: Number(editAmt), category: editCat, date: editDate });
-    setEditId(null); fetchExpenses();
+    
+    // Solo enviamos a Firebase los datos que realmente editamos en este panel
+    // (quitamos la categoría para que no genere conflicto con tu base de datos)
+    try {
+      await updateExpense(user.uid, id, { 
+        description: editDesc, 
+        amount: Number(editAmt), 
+        date: editDate 
+      });
+      setEditId(null); 
+      fetchExpenses();
+    } catch (error) {
+      console.error("Error al actualizar el gasto:", error);
+    }
   };
+
 
   return (
     <div className="w-full relative">
