@@ -22,21 +22,25 @@ export default function CardList({ refreshTrigger }: { refreshTrigger?: number }
   };
 
   return (
-    <div className="w-full">
-      
-      <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-green-100 flex flex-col gap-3 mt-[1.35rem]">
-        {cards.length === 0 ? <p className="text-slate-500 text-sm text-center">No hay tarjetas guardadas.</p> : null}
+    <div className="w-full relative">
+      <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex flex-col gap-3">
+        {cards.length === 0 ? <p className="text-slate-500 text-sm text-center my-4">No hay tarjetas guardadas.</p> : null}
         {cards.map(card => (
           <div key={card.id} className="flex justify-between items-center p-4 rounded-2xl bg-slate-50 border border-slate-100">
             <div>
               <p className="font-bold text-slate-800">{card.name}</p>
-              <p className="text-xs text-slate-500">Cierra el {card.closingDate} • Vence el {card.dueDate}</p>
+              {/* Acá está la corrección: usamos closingDay y dueDay */}
+              <p className="text-xs text-slate-500">Cierra el {card.closingDay} • Vence el {card.dueDay}</p>
             </div>
-            <button onClick={() => setCardToDelete(card.id)} className="text-xs text-slate-500 hover:bg-red-100 px-2 py-1.5 rounded-md">🗑️</button>
+            <div className="flex gap-2">
+              {/* Tachito de basura con el mismo estilo que el resto de la app */}
+              <button onClick={() => setCardToDelete(card.id)} className="text-xs text-slate-500 bg-slate-200 hover:bg-red-200 px-2 py-1 rounded-md">🗑️</button>
+            </div>
           </div>
         ))}
       </div>
 
+      {/* Modal Borrar */}
       {cardToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setCardToDelete(null)}>
           <div className="bg-white rounded-[2rem] w-full max-w-sm shadow-2xl p-6 flex flex-col gap-4 text-center animate-in zoom-in" onClick={e => e.stopPropagation()}>
