@@ -23,7 +23,7 @@ export default function CardList({ refreshTrigger }: { refreshTrigger?: number }
 
   return (
     <div className="w-full">
-      <h2 className="text-2xl font-extrabold text-green-800 mb-2">Mis Tarjetas</h2>
+      
       <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-green-100 flex flex-col gap-3 mt-[1.35rem]">
         {cards.length === 0 ? <p className="text-slate-500 text-sm text-center">No hay tarjetas guardadas.</p> : null}
         {cards.map(card => (
