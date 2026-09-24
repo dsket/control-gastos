@@ -14,7 +14,7 @@ export function AuthProvider({ children }) {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       // ACÁ DEFINIMOS QUIÉN PUEDE ENTRAR (cambiá este email por el tuyo de Google)
       const allowedEmails = ["delfinasket@gmail.com",
-        "micalopez1310@gmail.com", "sketdelfina@gmail.com", "thomas.imbriago29@gmail.com"
+        "micalopez1310@gmail.com", "sketdelfina@gmail.com", "thomas.imbriago29@gmail.com", "smgarciaferr@gmail.com"
       ]; 
 
       if (currentUser && allowedEmails.includes(currentUser.email)) {
