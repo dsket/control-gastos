@@ -42,32 +42,48 @@ export default function IncomeManager({ onIncomeAdded }: { onIncomeAdded?: () =>
 
   const saveEdit = async (id: string) => {
     if (!user) return;
-    await updateIncome(user.uid, id, { description: editDesc, amount: Number(editAmt), date: editDate });
-    setEditId(null); fetchIncomes(); if(onIncomeAdded) onIncomeAdded();
+    try {
+      await updateIncome(user.uid, id, { description: editDesc, amount: Number(editAmt), date: editDate });
+      setEditId(null); fetchIncomes(); if(onIncomeAdded) onIncomeAdded();
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
-    <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-8 items-start relative">
+      {/* COLUMNA IZQUIERDA */}
       <div>
-        <h2 className="text-2xl font-extrabold text-green-800 mb-2">Registrar Ingreso</h2>
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-[2rem] shadow-sm border border-green-100 flex flex-col gap-3 mt-2">
-          <input type="text" placeholder="Ej: Sueldo" value={description} onChange={e => setDescription(e.target.value)} required className="p-3 rounded-xl border bg-green-50/50" />
-          <input type="number" placeholder="Monto" value={amount} onChange={e => setAmount(e.target.value)} required className="p-3 rounded-xl border bg-green-50/50" />
-          <div className="flex gap-2">
-             <select value={source} onChange={e => setSource(e.target.value)} className="w-1/2 p-3 rounded-xl border bg-green-50/50">
-               <option value="Sueldo">Sueldo</option><option value="Transferencia">Transferencia</option>
+        <h2 className="text-2xl font-bold text-green-800 mb-2">Registrar Ingreso</h2>
+        <p className="text-slate-500 text-sm mb-6">Anotá un nuevo ingreso especificando su origen.</p>
+        
+        <form onSubmit={handleSubmit} className="bg-white p-6 md:p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex flex-col gap-4">
+          <h3 className="text-lg font-bold text-green-700 mb-2 flex items-center gap-2">💰 Nuevo Ingreso</h3>
+          
+          <input type="text" placeholder="¿De dónde proviene el ingreso?" value={description} onChange={e => setDescription(e.target.value)} required className="p-4 rounded-2xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-green-400 w-full" />
+          
+          <input type="number" placeholder="Monto Total ($)" value={amount} onChange={e => setAmount(e.target.value)} required className="p-4 rounded-2xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-green-400 w-full" />
+          
+          <div className="flex flex-col gap-1">
+             <label className="text-xs font-bold text-green-800 ml-1">Origen del Ingreso</label>
+             <select value={source} onChange={e => setSource(e.target.value)} className="p-4 rounded-2xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-green-400 w-full">
+               <option value="Sueldo">Sueldo</option>
+               <option value="Transferencia">Transferencia</option>
+               <option value="Regalo">Regalo</option>
              </select>
-             <input type="date" value={date} onChange={e => setDate(e.target.value)} required className="w-1/2 p-3 rounded-xl border bg-green-50/50 text-sm" />
           </div>
-          <button type="submit" className="w-full bg-green-500 text-white font-bold py-3 rounded-xl mt-2">Guardar 💰</button>
+
+          <input type="date" value={date} onChange={e => setDate(e.target.value)} required className="p-4 rounded-2xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-green-400 w-full text-slate-600" />
+          
+          <button type="submit" className="w-full bg-[#00d05e] hover:bg-green-600 text-white font-bold py-4 rounded-2xl mt-2 transition-all">Registrar Ingreso ✨</button>
         </form>
       </div>
 
+      {/* COLUMNA DERECHA */}
       <div>
-        {/* TÍTULO ACTUALIZADO Y CAJA ALINEADA */}
-        <h2 className="text-2xl font-extrabold text-green-800 mb-2">Historial de Ingresos</h2>
-        <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-green-100 mt-2 flex flex-col gap-3">
-          {incomes.length === 0 ? <p className="text-slate-500 text-sm text-center my-4">No hay ingresos.</p> : null}
+        <h2 className="text-2xl font-bold text-green-800 mb-6">Historial</h2>
+        <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex flex-col gap-3">
+          {incomes.length === 0 ? <p className="text-slate-500 text-sm text-center my-4">No hay ingresos registrados todavía.</p> : null}
           {incomes.map(inc => {
             if (editId === inc.id) {
               return (
@@ -103,6 +119,7 @@ export default function IncomeManager({ onIncomeAdded }: { onIncomeAdded?: () =>
         </div>
       </div>
 
+      {/* MODAL BORRAR */}
       {incomeToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIncomeToDelete(null)}>
           <div className="bg-white rounded-[2rem] w-full max-w-sm shadow-2xl p-6 flex flex-col gap-4 text-center animate-in zoom-in" onClick={e => e.stopPropagation()}>
@@ -118,5 +135,3 @@ export default function IncomeManager({ onIncomeAdded }: { onIncomeAdded?: () =>
     </div>
   );
 }
-
-  
