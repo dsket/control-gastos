@@ -78,3 +78,10 @@ export const deleteFixedExpense = async (userId: string, id: string) => {
 export const updateFixedExpense = async (userId: string, id: string, updatedData: any) => {
   await updateDoc(doc(db, "users", userId, "fixedExpenses", id), updatedData);
 };
+export const deleteIncome = async (userId: string, id: string) => {
+  await deleteDoc(doc(db, "users", userId, "incomes", id));
+};
+
+export const updateIncome = async (userId: string, id: string, updatedData: any) => {
+  await updateDoc(doc(db, "users", userId, "incomes", id), updatedData);
+};

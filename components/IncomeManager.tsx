@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { addIncome, getIncomes } from "../services/firestore";
+import { addIncome, getIncomes, deleteIncome, updateIncome } from "../services/firestore";
 import { useAuth } from "../context/AuthContext";
 
 interface Income {
@@ -13,14 +13,23 @@ interface Income {
 
 export default function IncomeManager({ onIncomeAdded }: { onIncomeAdded: () => void }) {
   const { user } = useAuth();
+  
+  // Estados del formulario principal
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [source, setSource] = useState("Sueldo");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [loading, setLoading] = useState(false);
-  
   const [toastMessage, setToastMessage] = useState("");
+
+  // Estados para el modo edición
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editDescription, setEditDescription] = useState("");
+  const [editAmount, setEditAmount] = useState("");
+  const [editSource, setEditSource] = useState("");
+  const [editDate, setEditDate] = useState("");
 
   const fetchIncomes = async () => {
     if (user) {
@@ -38,12 +47,7 @@ export default function IncomeManager({ onIncomeAdded }: { onIncomeAdded: () => 
     if (!user) return;
     setLoading(true);
     try {
-      await addIncome(user.uid, {
-        description,
-        amount: Number(amount),
-        source,
-        date
-      });
+      await addIncome(user.uid, { description, amount: Number(amount), source, date });
       setDescription("");
       setAmount("");
       
@@ -59,6 +63,40 @@ export default function IncomeManager({ onIncomeAdded }: { onIncomeAdded: () => 
     setLoading(false);
   };
 
+  const handleDelete = async (id: string) => {
+    if (!user) return;
+    if (window.confirm("¿Seguro que querés borrar este ingreso?")) {
+      await deleteIncome(user.uid, id);
+      setToastMessage("🗑️ Ingreso eliminado.");
+      setTimeout(() => setToastMessage(""), 3000);
+      fetchIncomes();
+      onIncomeAdded();
+    }
+  };
+
+  const startEdit = (inc: Income) => {
+    setEditId(inc.id);
+    setEditDescription(inc.description);
+    setEditAmount(inc.amount.toString());
+    setEditSource(inc.source);
+    setEditDate(inc.date);
+  };
+
+  const saveEdit = async (id: string) => {
+    if (!user) return;
+    await updateIncome(user.uid, id, {
+      description: editDescription,
+      amount: Number(editAmount),
+      source: editSource,
+      date: editDate
+    });
+    setEditId(null);
+    setToastMessage("✅ Ingreso actualizado.");
+    setTimeout(() => setToastMessage(""), 3000);
+    fetchIncomes();
+    onIncomeAdded();
+  };
+
   return (
     <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-8 items-start relative">
       
@@ -72,27 +110,19 @@ export default function IncomeManager({ onIncomeAdded }: { onIncomeAdded: () => 
           
           <div className="flex flex-col gap-3">
             <input 
-              type="text" 
-              placeholder="Descripción (Ej: Sueldo, regalo...)" 
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
+              type="text" placeholder="Descripción (Ej: Sueldo, regalo...)" 
+              value={description} onChange={(e) => setDescription(e.target.value)} required
               className="p-3 rounded-xl border border-green-200 bg-green-50/50 focus:outline-none focus:ring-2 focus:ring-green-400"
             />
             <input 
-              type="number" 
-              placeholder="Monto ($)" 
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              required
-              min="1"
+              type="number" placeholder="Monto ($)" 
+              value={amount} onChange={(e) => setAmount(e.target.value)} required min="1"
               className="p-3 rounded-xl border border-green-200 bg-green-50/50 focus:outline-none focus:ring-2 focus:ring-green-400"
             />
             <div className="flex flex-col gap-1">
               <label className="text-xs font-bold text-green-800 ml-1">Tipo de ingreso</label>
               <select 
-                value={source} 
-                onChange={(e) => setSource(e.target.value)}
+                value={source} onChange={(e) => setSource(e.target.value)}
                 className="p-3 rounded-xl border border-green-200 bg-green-50/50 focus:outline-none focus:ring-2 focus:ring-green-400"
               >
                 <option value="Sueldo">💼 Sueldo</option>
@@ -102,15 +132,11 @@ export default function IncomeManager({ onIncomeAdded }: { onIncomeAdded: () => 
               </select>
             </div>
             <input 
-              type="date" 
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              required
+              type="date" value={date} onChange={(e) => setDate(e.target.value)} required
               className="p-3 rounded-xl border border-green-200 bg-green-50/50 text-slate-600"
             />
             <button 
-              type="submit" 
-              disabled={loading}
+              type="submit" disabled={loading}
               className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition-all active:scale-95 disabled:opacity-50 mt-2 shadow-sm"
             >
               {loading ? "Guardando..." : "Guardar Ingreso ✨"}
@@ -128,20 +154,54 @@ export default function IncomeManager({ onIncomeAdded }: { onIncomeAdded: () => 
             <p className="text-sm text-center text-green-600/80 my-4">No hay ingresos registrados todavía.</p>
           ) : (
             <div className="flex flex-col gap-3">
-              {incomes.map(inc => (
-                <div key={inc.id} className="flex justify-between items-center p-4 rounded-2xl bg-white shadow-sm border border-green-100 hover:shadow-md transition-all">
-                  <div className="flex items-center gap-3">
-                    <div className="text-3xl bg-green-50 p-2 rounded-xl">
-                      {inc.source === "Sueldo" ? "💼" : inc.source === "Transferencia" ? "📱" : inc.source === "Regalo" ? "🎁" : "📦"}
+              {incomes.map(inc => {
+                
+                // --- MODO EDICIÓN ---
+                if (editId === inc.id) {
+                  return (
+                    <div key={inc.id} className="p-4 rounded-2xl bg-yellow-50 border border-yellow-200 flex flex-col gap-3 shadow-sm">
+                      <p className="font-bold text-slate-800 text-sm">Editando ingreso...</p>
+                      <input type="text" value={editDescription} onChange={(e) => setEditDescription(e.target.value)} className="p-2 rounded-xl border border-yellow-300 bg-white" placeholder="Descripción" />
+                      <div className="flex gap-2">
+                        <input type="number" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} className="w-1/2 p-2 rounded-xl border border-yellow-300 bg-white" placeholder="Monto" />
+                        <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="w-1/2 p-2 rounded-xl border border-yellow-300 bg-white text-sm" />
+                      </div>
+                      <select value={editSource} onChange={(e) => setEditSource(e.target.value)} className="p-2 rounded-xl border border-yellow-300 bg-white">
+                        <option value="Sueldo">💼 Sueldo</option>
+                        <option value="Transferencia">📱 Transferencia</option>
+                        <option value="Regalo">🎁 Regalo</option>
+                        <option value="Otro">📦 Otro</option>
+                      </select>
+                      <div className="flex gap-2 mt-1">
+                        <button onClick={() => saveEdit(inc.id)} className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-xl text-sm font-bold w-full transition-all">Guardar</button>
+                        <button onClick={() => setEditId(null)} className="bg-slate-200 hover:bg-slate-300 text-slate-600 px-3 py-2 rounded-xl text-sm font-bold w-full transition-all">Cancelar</button>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-bold text-slate-800">{inc.description}</p>
-                      <p className="text-xs text-slate-500 font-medium">{inc.source} • {inc.date}</p>
+                  );
+                }
+
+                // --- MODO NORMAL ---
+                return (
+                  <div key={inc.id} className="flex justify-between items-center p-4 rounded-2xl bg-white shadow-sm border border-green-100 hover:shadow-md transition-all">
+                    <div className="flex items-center gap-3">
+                      <div className="text-3xl bg-green-50 p-2 rounded-xl">
+                        {inc.source === "Sueldo" ? "💼" : inc.source === "Transferencia" ? "📱" : inc.source === "Regalo" ? "🎁" : "📦"}
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-800">{inc.description}</p>
+                        <p className="text-xs text-slate-500 font-medium">{inc.source} • {inc.date}</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <span className="font-extrabold text-green-600 text-lg">+${inc.amount.toLocaleString()}</span>
+                      <div className="flex gap-2">
+                        <button onClick={() => startEdit(inc)} className="text-xs text-slate-500 bg-slate-100 hover:bg-yellow-100 px-2 py-1.5 rounded-md transition-colors" title="Editar">✏️</button>
+                        <button onClick={() => handleDelete(inc.id)} className="text-xs text-slate-500 bg-slate-100 hover:bg-red-100 px-2 py-1.5 rounded-md transition-colors" title="Borrar">🗑️</button>
+                      </div>
                     </div>
                   </div>
-                  <span className="font-extrabold text-green-600 text-lg">+${inc.amount.toLocaleString()}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
