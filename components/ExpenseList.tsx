@@ -30,21 +30,24 @@ export default function ExpenseList({ refreshTrigger }: { refreshTrigger?: numbe
     fetchExpenses();
   }, [user, refreshTrigger]);
 
-  // Función de borrado con el modal lindo
   const executeDelete = async () => {
     if (!user || !expenseToDelete) return;
     await deleteExpense(user.uid, expenseToDelete);
     setToastMessage("🗑️ Gasto eliminado.");
     setTimeout(() => setToastMessage(""), 3000);
-    setExpenseToDelete(null); // Cierra el cartel
-    fetchExpenses(); // Recarga la lista
+    setExpenseToDelete(null); 
+    fetchExpenses(); 
   };
 
   return (
     <div className="w-full relative">
-      <h2 className="text-2xl font-extrabold text-slate-800 mb-2">Historial de Gastos</h2>
-      
-      <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 mt-2">
+      {/* 
+        ELIMINAMOS EL TÍTULO H2 REPETIDO ACÁ.
+        Ahora la página padre (page.tsx) es la única que pone el título,
+        y usamos mt-[1.35rem] para que la caja blanca quede perfectamente 
+        alineada con la caja del formulario de la izquierda.
+      */}
+      <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 mt-[1.35rem]">
         {expenses.length === 0 ? (
           <p className="text-sm text-center text-slate-500 my-4">No hay gastos registrados todavía.</p>
         ) : (
@@ -57,8 +60,6 @@ export default function ExpenseList({ refreshTrigger }: { refreshTrigger?: numbe
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <span className="font-extrabold text-slate-800 text-lg">-${exp.amount.toLocaleString()}</span>
-                  
-                  {/* BOTÓN DE BORRAR QUE ABRE EL CARTEL */}
                   <button 
                     onClick={() => setExpenseToDelete(exp.id)} 
                     className="text-xs text-slate-500 bg-slate-100 hover:bg-red-100 px-2 py-1.5 rounded-md transition-colors"
