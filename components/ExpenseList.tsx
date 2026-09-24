@@ -11,7 +11,7 @@ interface Expense {
   date: string;
 }
 
-export default function ExpenseList() {
+export default function ExpenseList({ refreshTrigger }: { refreshTrigger?: number }) {
   const { user } = useAuth();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [toastMessage, setToastMessage] = useState("");
@@ -28,7 +28,7 @@ export default function ExpenseList() {
 
   useEffect(() => {
     fetchExpenses();
-  }, [user]);
+  }, [user, refreshTrigger]);
 
   // Función de borrado con el modal lindo
   const executeDelete = async () => {
