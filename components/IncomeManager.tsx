@@ -31,6 +31,9 @@ export default function IncomeManager({ onIncomeAdded }: { onIncomeAdded: () => 
   const [editSource, setEditSource] = useState("");
   const [editDate, setEditDate] = useState("");
 
+  // Estado para el cartel de confirmación de borrado
+  const [incomeToDelete, setIncomeToDelete] = useState<string | null>(null);
+
   const fetchIncomes = async () => {
     if (user) {
       const data = await getIncomes(user.uid);
@@ -63,15 +66,17 @@ export default function IncomeManager({ onIncomeAdded }: { onIncomeAdded: () => 
     setLoading(false);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!user) return;
-    if (window.confirm("¿Seguro que querés borrar este ingreso?")) {
-      await deleteIncome(user.uid, id);
-      setToastMessage("🗑️ Ingreso eliminado.");
-      setTimeout(() => setToastMessage(""), 3000);
-      fetchIncomes();
-      onIncomeAdded();
-    }
+  // NUEVA FUNCIÓN PARA BORRAR SIN EL CARTEL FEO
+  const executeDelete = async () => {
+    if (!user || !incomeToDelete) return;
+    
+    await deleteIncome(user.uid, incomeToDelete);
+    setToastMessage("🗑️ Ingreso eliminado.");
+    setTimeout(() => setToastMessage(""), 3000);
+    
+    setIncomeToDelete(null); // Cerramos el cartel
+    fetchIncomes();
+    onIncomeAdded();
   };
 
   const startEdit = (inc: Income) => {
@@ -196,7 +201,9 @@ export default function IncomeManager({ onIncomeAdded }: { onIncomeAdded: () => 
                       <span className="font-extrabold text-green-600 text-lg">+${inc.amount.toLocaleString()}</span>
                       <div className="flex gap-2">
                         <button onClick={() => startEdit(inc)} className="text-xs text-slate-500 bg-slate-100 hover:bg-yellow-100 px-2 py-1.5 rounded-md transition-colors" title="Editar">✏️</button>
-                        <button onClick={() => handleDelete(inc.id)} className="text-xs text-slate-500 bg-slate-100 hover:bg-red-100 px-2 py-1.5 rounded-md transition-colors" title="Borrar">🗑️</button>
+                        
+                        {/* EN LUGAR DE BORRAR DIRECTO, ABRIMOS NUESTRO CARTEL LINDO */}
+                        <button onClick={() => setIncomeToDelete(inc.id)} className="text-xs text-slate-500 bg-slate-100 hover:bg-red-100 px-2 py-1.5 rounded-md transition-colors" title="Borrar">🗑️</button>
                       </div>
                     </div>
                   </div>
@@ -207,12 +214,32 @@ export default function IncomeManager({ onIncomeAdded }: { onIncomeAdded: () => 
         </div>
       </div>
 
-      {/* CARTEL FLOTANTE (TOAST) */}
+      {/* CARTEL FLOTANTE (TOAST) DE ÉXITO */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 bg-slate-800 text-white px-6 py-4 rounded-2xl shadow-2xl font-bold flex items-center gap-3 animate-bounce z-50 transition-all">
           <span>{toastMessage}</span>
         </div>
       )}
+
+      {/* NUEVO CARTEL DE CONFIRMACIÓN DE BORRADO LINDÍSIMO */}
+      {incomeToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIncomeToDelete(null)}>
+          <div className="bg-white rounded-[2rem] w-full max-w-sm shadow-2xl p-6 flex flex-col gap-4 text-center animate-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
+            <div className="text-5xl mb-2">🗑️</div>
+            <h3 className="text-xl font-extrabold text-slate-800">¿Borrar ingreso?</h3>
+            <p className="text-slate-500 text-sm">Esta acción no se puede deshacer y el monto se restará de tu plata disponible.</p>
+            <div className="flex gap-3 mt-4">
+              <button onClick={() => setIncomeToDelete(null)} className="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-all">
+                Cancelar
+              </button>
+              <button onClick={executeDelete} className="w-1/2 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-all shadow-md">
+                Sí, borrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
