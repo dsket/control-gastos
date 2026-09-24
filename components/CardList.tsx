@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { getCards, deleteCard } from "../services/firestore";
 import { useAuth } from "../context/AuthContext";
 
-export default function CardList() {
+export default function CardList({ refreshTrigger }: { refreshTrigger?: number }) {
   const { user } = useAuth();
   const [cards, setCards] = useState<any[]>([]);
   const [cardToDelete, setCardToDelete] = useState<string | null>(null);
@@ -12,7 +12,7 @@ export default function CardList() {
     if (user) setCards(await getCards(user.uid));
   };
 
-  useEffect(() => { fetchCards(); }, [user]);
+  useEffect(() => { fetchCards(); }, [user, refreshTrigger]);
 
   const executeDelete = async () => {
     if (!user || !cardToDelete) return;

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { addCategory, getCategories, deleteCategory } from "../services/firestore";
 import { useAuth } from "../context/AuthContext";
 
-export default function CategoryManager() {
+export default function CategoryManager({ onCategoryAdded }: { onCategoryAdded?: () => void }) {
   const { user } = useAuth();
   const [name, setName] = useState("");
   const [icon, setIcon] = useState("🏷️");
@@ -22,6 +22,7 @@ export default function CategoryManager() {
     await addCategory(user.uid, { name, icon });
     setName(""); setIcon("🏷️");
     fetchCategories();
+    if (onCategoryAdded) onCategoryAdded();
   };
 
   const executeDelete = async () => {
