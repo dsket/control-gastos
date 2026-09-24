@@ -64,8 +64,10 @@ export default function IncomeManager({ onIncomeAdded }: { onIncomeAdded?: () =>
       </div>
 
       <div>
-        <h2 className="text-2xl font-extrabold text-green-800 mb-2">Historial</h2>
+        {/* TÍTULO ACTUALIZADO Y CAJA ALINEADA */}
+        <h2 className="text-2xl font-extrabold text-green-800 mb-2">Historial de Ingresos</h2>
         <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-green-100 mt-2 flex flex-col gap-3">
+          {incomes.length === 0 ? <p className="text-slate-500 text-sm text-center my-4">No hay ingresos.</p> : null}
           {incomes.map(inc => {
             if (editId === inc.id) {
               return (
@@ -116,3 +118,5 @@ export default function IncomeManager({ onIncomeAdded }: { onIncomeAdded?: () =>
     </div>
   );
 }
+
+  

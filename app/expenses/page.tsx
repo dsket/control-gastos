@@ -21,7 +21,7 @@ export default function ExpensesPage() {
           <ExpenseForm onExpenseAdded={() => setRefresh(refresh + 1)} />
         </div>
         <div>
-          <h2 className="text-2xl font-extrabold text-green-800 mb-2">Historial Completo</h2>
+          <h2 className="text-2xl font-extrabold text-green-800 mb-2">Historial</h2>
           <ExpenseList refreshTrigger={refresh} />
         </div>
       </main>

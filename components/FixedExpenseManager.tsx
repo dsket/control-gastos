@@ -50,7 +50,7 @@ export default function FixedExpenseManager() {
   return (
     <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-8">
       <div>
-        <h2 className="text-2xl font-extrabold text-blue-800 mb-2">Nuevo GastoFijo</h2>
+        <h2 className="text-2xl font-extrabold text-blue-800 mb-2">Nuevo Fijo</h2>
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-[2rem] shadow-sm border border-blue-100 mt-2 flex flex-col gap-3">
           <input type="text" placeholder="Ej: Gimnasio" value={description} onChange={e => setDescription(e.target.value)} required className="p-3 rounded-xl border bg-blue-50/50" />
           <input type="number" placeholder="Monto" value={amount} onChange={e => setAmount(e.target.value)} required className="p-3 rounded-xl border bg-blue-50/50" />
@@ -66,8 +66,10 @@ export default function FixedExpenseManager() {
       </div>
 
       <div>
-        <h2 className="text-2xl font-extrabold text-blue-800 mb-2">Mis Fijos</h2>
+        {/* TÍTULO ACTUALIZADO Y CAJA ALINEADA */}
+        <h2 className="text-2xl font-extrabold text-blue-800 mb-2">Historial de Gastos Fijos</h2>
         <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-blue-100 mt-2 flex flex-col gap-3">
+          {fixedExpenses.length === 0 ? <p className="text-slate-500 text-sm text-center my-4">No hay gastos fijos.</p> : null}
           {fixedExpenses.map(exp => {
             if (editId === exp.id) {
               return (
