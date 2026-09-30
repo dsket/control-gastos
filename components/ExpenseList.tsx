@@ -1,11 +1,12 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { getExpenses, deleteExpense, updateExpense } from "../services/firestore";
+import { getExpenses, deleteExpense, updateExpense, getCards } from "../services/firestore";
 import { useAuth } from "../context/AuthContext";
 
 export default function ExpenseList({ refreshTrigger }: { refreshTrigger?: number }) {
   const { user } = useAuth();
   const [expenses, setExpenses] = useState<any[]>([]);
+  const [cards, setCards] = useState<any[]>([]);
   const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
   
   const [editId, setEditId] = useState<string | null>(null);
@@ -13,18 +14,25 @@ export default function ExpenseList({ refreshTrigger }: { refreshTrigger?: numbe
   const [editAmt, setEditAmt] = useState("");
   const [editDate, setEditDate] = useState("");
   const [editPaymentMethod, setEditPaymentMethod] = useState("");
+  
+  // NUEVOS ESTADOS: Para elegir tarjeta y cuotas
+  const [editCardId, setEditCardId] = useState("");
+  const [editInstallments, setEditInstallments] = useState("1");
 
-  const fetchExpenses = async () => {
-    if (user) setExpenses(await getExpenses(user.uid));
+  const fetchData = async () => {
+    if (user) {
+      setExpenses(await getExpenses(user.uid));
+      setCards(await getCards(user.uid));
+    }
   };
 
-  useEffect(() => { fetchExpenses(); }, [user, refreshTrigger]);
+  useEffect(() => { fetchData(); }, [user, refreshTrigger]);
 
   const executeDelete = async () => {
     if (!user || !expenseToDelete) return;
     await deleteExpense(user.uid, expenseToDelete);
     setExpenseToDelete(null); 
-    fetchExpenses(); 
+    fetchData(); 
   };
 
   const startEdit = (exp: any) => {
@@ -32,22 +40,36 @@ export default function ExpenseList({ refreshTrigger }: { refreshTrigger?: numbe
     setEditDesc(exp.description); 
     setEditAmt(exp.amount.toString()); 
     setEditDate(exp.date);
-    // Cargamos el medio de pago que tenía, o "debit" por defecto
     setEditPaymentMethod(exp.paymentMethod || "debit"); 
+    
+    // Si tenía tarjeta y cuotas, las cargamos. Si no, valores por defecto.
+    setEditCardId(exp.cardId || "");
+    setEditInstallments(exp.installments ? exp.installments.toString() : "1");
   };
 
   const saveEdit = async (id: string) => {
     if (!user) return;
     try {
-      // Ahora sí le mandamos el medio de pago actualizado a la base de datos
-      await updateExpense(user.uid, id, { 
+      const updatedData: any = { 
         description: editDesc, 
         amount: Number(editAmt), 
         date: editDate,
         paymentMethod: editPaymentMethod 
-      });
+      };
+
+      // Si elegiste crédito, guardamos la tarjeta y las cuotas obligatoriamente
+      if (editPaymentMethod === "credit") {
+        updatedData.cardId = editCardId;
+        updatedData.installments = Number(editInstallments);
+      } else {
+        // Si lo pasás a débito/efectivo, borramos los datos de tarjeta para no mezclar
+        updatedData.cardId = "";
+        updatedData.installments = 1;
+      }
+
+      await updateExpense(user.uid, id, updatedData);
       setEditId(null); 
-      fetchExpenses();
+      fetchData();
     } catch (error) {
       console.error("Error al actualizar el gasto:", error);
     }
@@ -61,12 +83,13 @@ export default function ExpenseList({ refreshTrigger }: { refreshTrigger?: numbe
         ) : (
           <div className="flex flex-col gap-3">
             {expenses.map(exp => {
+              
+              // === MODO EDICIÓN ===
               if (editId === exp.id) {
                 return (
                   <div key={exp.id} className="p-4 rounded-2xl bg-yellow-50 border border-yellow-200 flex flex-col gap-2">
                     <input type="text" value={editDesc} onChange={e => setEditDesc(e.target.value)} className="p-2 rounded-lg border bg-white" placeholder="Descripción" />
                     
-                    {/* ACÁ AGREGAMOS EL MEDIO DE PAGO EN 3 COLUMNAS */}
                     <div className="flex gap-2">
                       <input type="number" value={editAmt} onChange={e => setEditAmt(e.target.value)} className="w-1/3 p-2 rounded-lg border bg-white" placeholder="Monto" />
                       <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)} className="w-1/3 p-2 rounded-lg border bg-white text-sm" />
@@ -78,6 +101,19 @@ export default function ExpenseList({ refreshTrigger }: { refreshTrigger?: numbe
                       </select>
                     </div>
 
+                    {/* ACÁ ESTÁ LA MAGIA: Si es crédito, te pide tarjeta y cuotas */}
+                    {editPaymentMethod === "credit" && (
+                      <div className="flex gap-2 mt-1">
+                        <select value={editCardId} onChange={e => setEditCardId(e.target.value)} className="w-1/2 p-2 rounded-lg border bg-white text-sm">
+                          <option value="">Elegí tarjeta...</option>
+                          {cards.map(c => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                        <input type="number" value={editInstallments} onChange={e => setEditInstallments(e.target.value)} className="w-1/2 p-2 rounded-lg border bg-white text-sm" placeholder="Cuotas" min="1" />
+                      </div>
+                    )}
+
                     <div className="flex gap-2 mt-1">
                       <button onClick={() => saveEdit(exp.id)} className="bg-green-500 text-white font-bold py-2 px-3 rounded-lg w-full">Guardar</button>
                       <button onClick={() => setEditId(null)} className="bg-slate-200 text-slate-700 font-bold py-2 px-3 rounded-lg w-full">Cancelar</button>
@@ -85,11 +121,15 @@ export default function ExpenseList({ refreshTrigger }: { refreshTrigger?: numbe
                   </div>
                 );
               }
+              
+              // === MODO VISUALIZACIÓN ===
               return (
                 <div key={exp.id} className="flex justify-between items-center p-4 rounded-2xl bg-slate-50 border border-slate-100">
                   <div>
                     <p className="font-bold text-slate-800">{exp.description}</p>
                     <p className="text-xs text-slate-500">
+                      {/* Le sumamos un indicador de cuotas para que lo veas fácil */}
+                      {exp.paymentMethod === "credit" && exp.installments > 1 ? `💳 ${exp.installments} cuotas • ` : ""}
                       {exp.category ? exp.category + " • " : ""}{exp.date}
                     </p>
                   </div>
@@ -123,4 +163,3 @@ export default function ExpenseList({ refreshTrigger }: { refreshTrigger?: numbe
     </div>
   );
 }
-
